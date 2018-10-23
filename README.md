@@ -1,3 +1,3 @@
 # jessica
-javascript nintendo
+javascript nintendo.
 yes. again.
