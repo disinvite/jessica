@@ -19,18 +19,21 @@ const jmp_table = {
   "TYA": op_tya
 };
 
-const flags = 0x34;
+let flags = 0x24; //?
+let cycles = 0;
 
 const regs = {
   a: 0,
   x: 0,
   y: 0,
-  sp: 0
+  sp: 0xFD
 }
 
 // flags
 // 7654 3210
 // NVss DIZC
+// 0010 0100  == 0x24
+// 0011 0100  == 0x34
 
 function set_flag_carry(v)     { if(v) { flags |= 0x01; } else { flags &= 0xFE } }
 function set_flag_zero(v)      { if(v) { flags |= 0x02; } else { flags &= 0xFD } }
@@ -48,21 +51,26 @@ function get_flag_negative()  { return (flags & 0x80) ? 1 : 0; }
 
 // these aren't the right reset flags
 
-let pc = 0xc000;
+let pc = 0xc000; // for nestest.nes automated tests
 
 const rom = fs.readFileSync('./roms/nestest.nes');
-
 const header = rom.slice(0,16);
-console.log(header);
 const prg = rom.slice(16,16384 + 16);
-console.log(prg);
 
-function prg_read(addr) {
-  return prg.readUInt8(addr - 0xc000); // ugh
+function mem_read(addr) {
+  if((addr >= 0x8000) && (addr < 0xc000)) {
+    return prg.readUInt8(addr - 0x8000);
+  } else {
+    return prg.readUInt8(addr - 0xc000);
+  }
 }
 
-function prg_read_16(addr) {
-  return prg.readUInt16LE(addr - 0xc000); // ugh
+function mem_read_16(addr) {
+  if((addr >= 0x8000) && (addr < 0xc000)) {
+    return prg.readUInt16LE(addr - 0x8000);
+  } else {
+    return prg.readUInt16LE(addr - 0xc000);
+  }
 }
 
 function debug_prg_read(addr,n) {
@@ -71,37 +79,39 @@ function debug_prg_read(addr,n) {
   return prg.slice(start, start + n);
 }
 
-
 // a horrible nightmare.
 function debug_print(opcode, address) {
   const _hex = (x,n) => x.toString(16).padStart(n,'0').toUpperCase()
 
   let _pc = pc.toString(16).toUpperCase();
   let _bytes = debug_prg_read(pc,opcode.bytes);
-  let _bytes_arr = [..._bytes]
-  let _byte_str = _bytes_arr.map((x) => _hex(x,2)).join(' ').padEnd(8,' ');
-  let _syntax_str = `${opcode.instruction} $${_hex(address,4)}`.padEnd(30,' ')
-  let _regs_str = `A:${_hex(regs.a,2)} X:${_hex(regs.x,2)} Y:${_hex(regs.y,2)} P:${_hex(flags,2)}`
+  let _bytes_arr = [..._bytes];
+  let _byte_str = _bytes_arr.map((x) => _hex(x,2)).join(' ').padEnd(42,' ');
+  let _regs_str = `A:${_hex(regs.a,2)} X:${_hex(regs.x,2)} Y:${_hex(regs.y,2)} P:${_hex(flags,2)} SP:${_hex(regs.sp,2)} CYC:${cycles.toString().padStart(3,' ')}`
 
-  console.log(`${_pc}  ${_byte_str}  ${_syntax_str}  ${_regs_str}`);
+  console.log(`${_pc} ${_byte_str} ${_regs_str}`);
 }
 
 for(let _x = 0; _x < 5; _x++) {
-  let b = prg_read(pc); // ugh
+  let b = mem_read(pc);
   let opcode = opcodes[b];
   let address;
   switch(opcode.mode) {
     case 'Absolute':
-      address = prg_read_16(pc + 1);
+      address = mem_read_16(pc + 1);
+      break;
+    case 'Immediate':
+      address = pc + 1;
       break;
   }
 
   let args = {addr: address};
   let opcode_fn = jmp_table[opcode.instruction];
-  //console.log(address.toString(16));
-  debug_print(opcode,address);
-  opcode_fn(args);
 
+  debug_print(opcode,address);
+  pc += opcode.bytes;
+  cycles += 3 * opcode.cycles;
+  opcode_fn(args);
 }
 
 
@@ -139,7 +149,11 @@ function op_jmp(args) {
 
 function op_jsr(args) { }
 function op_lda(args) { }
-function op_ldx(args) { }
+function op_ldx(args) {
+  regs.x = mem_read(args.addr);
+  set_flag_zero(regs.x == 0);
+}
+
 function op_ldy(args) { }
 function op_lsr(args) { }
 function op_nop(args) { }
