@@ -1,0 +1,24 @@
+{
+  "name": "jessica",
+  "private": true,
+  "version": "0.0.1",
+  "description": "javascript nes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/disinvite/jessica.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/disinvite/jessica/issues"
+  },
+  "homepage": "https://github.com/disinvite/jessica#readme",
+  "dependencies": {
+    "string.prototype.padend": "^3.0.0",
+    "string.prototype.padstart": "^3.0.0"
+  }
+}
