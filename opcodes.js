@@ -1,4 +1,4 @@
-module.exports = {
+module.exports = Object.freeze({
     0: { mode: 'Implied',     instruction: 'BRK', bytes: 1, cycles: 7 },
     1: { mode: 'IndirectX',   instruction: 'ORA', bytes: 2, cycles: 6 },
     5: { mode: 'ZeroPage',    instruction: 'ORA', bytes: 2, cycles: 3 },
@@ -150,4 +150,4 @@ module.exports = {
   249: { mode: 'AbsoluteY',   instruction: 'SBC', bytes: 3, cycles: 4 },
   253: { mode: 'AbsoluteX',   instruction: 'SBC', bytes: 3, cycles: 4 },
   254: { mode: 'AbsoluteX',   instruction: 'INC', bytes: 3, cycles: 7 }
-};
+});
